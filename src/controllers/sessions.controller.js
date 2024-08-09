@@ -2,6 +2,7 @@ import passport from 'passport'
 import UserDTO from '../dto/user.dto.js'
 import usersModel from '../models/users.model.js'
 import crypto from 'crypto'
+import { mailerConfig } from '../config/app.config.js'
 
 export const register = (req, res, next) => {
     passport.authenticate('register', (err, user, info) => {
@@ -96,6 +97,20 @@ export const sendToken = async (req, res) => {
             await user.save()
 
             const resetUrl = `http://${req.headers.host}/reset-password/${token}`
+
+            const transport = mailerConfig()
+
+            let result = await transport.sendMail({
+                from: process.env.MAILER_EMAIL,
+                to: process.env.MAILER_EMAIL,
+                subject: "Restaurar contraseña",
+                html: `<div>
+                    <h1>Hola, ${user.first_name}</h1>
+                    <p>Hemos recibido una solicitud para restablecer  la contraseña de tu cuenta</p>
+                    <p>Para restablecerla haz click en el enlace de abajo.</p>
+                    <p>${resetUrl}</p>
+                    </div>`
+            })
 
             res.render('message', {
                 title: "Restablecer contraseña ",
