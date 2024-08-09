@@ -1,5 +1,7 @@
 import passport from 'passport'
 import UserDTO from '../dto/user.dto.js'
+import usersModel from '../models/users.model.js'
+import crypto from 'crypto'
 
 export const register = (req, res, next) => {
     passport.authenticate('register', (err, user, info) => {
@@ -74,4 +76,36 @@ export const getCurrentSession = (req, res) => {
     }
 
     return res.json(session)
+}
+
+export const sendToken = async (req, res) => {
+    const email = req.body.email
+    try {
+        const user = await usersModel.findOne({ email })
+        if (!user) {
+            res.render('message', {
+                title: "Error",
+                messageTitle: "Usuario no encontrado"
+            })
+        } else {
+
+            const token = crypto.randomBytes(20).toString('hex')
+            user.resetPasswordToken = token
+            user.resetPasswordExpires = Date.now() + 3600000
+
+            await user.save()
+
+            const resetUrl = `http://${req.headers.host}/reset-password/${token}`
+
+            res.render('message', {
+                title: "Restablecer contraseña ",
+                messageTitle: "Mensaje enviado",
+                message: 'Se envió un link para reestablecer tu contraseña a tu email.'
+            })
+
+        }
+    } catch (error) {
+        res.status(500).json({ message: 'Error sending the email', error: error })
+    }
+
 }

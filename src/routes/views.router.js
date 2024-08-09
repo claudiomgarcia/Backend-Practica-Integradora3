@@ -7,6 +7,7 @@ import {
     renderLoginPage,
     renderRegisterPage,
     renderProfilePage,
+    renderForgotPassword,
     renderNotFoundPage
 } from '../controllers/views.controller.js'
 import { mockingProducts } from '../controllers/products.controller.js'
@@ -21,6 +22,7 @@ viewsRouter.get('/carts/:cid', isAuthenticated, checkRole(['user']), renderCartP
 viewsRouter.get(['/', '/login'], isNotAuthenticated, renderLoginPage)
 viewsRouter.get('/register', isNotAuthenticated, renderRegisterPage)
 viewsRouter.get('/profile', isAuthenticated, renderProfilePage)
+viewsRouter.get('/forgot-password', isNotAuthenticated, renderForgotPassword)
 viewsRouter.get('/mockingproducts', mockingProducts)
 viewsRouter.get('*', renderNotFoundPage)
 

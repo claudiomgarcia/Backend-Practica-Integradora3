@@ -5,7 +5,8 @@ import {
     githubAuth,
     githubCallback,
     logout,
-    getCurrentSession
+    getCurrentSession,
+    sendToken
 } from '../../controllers/sessions.controller.js'
 
 const sessionsRouter = Router()
@@ -16,5 +17,6 @@ sessionsRouter.get("/github", githubAuth)
 sessionsRouter.get("/githubcallback", githubCallback)
 sessionsRouter.post('/logout', logout)
 sessionsRouter.get('/current', getCurrentSession)
+sessionsRouter.post('/forgot-password', sendToken)
 
 export default sessionsRouter
