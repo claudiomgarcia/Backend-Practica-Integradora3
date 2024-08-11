@@ -3,6 +3,7 @@ import UserDTO from '../dto/user.dto.js'
 import usersModel from '../models/users.model.js'
 import crypto from 'crypto'
 import { mailerConfig } from '../config/app.config.js'
+import { createHash, isValidPassword } from '../utils.js'
 
 export const register = (req, res, next) => {
     passport.authenticate('register', (err, user, info) => {
@@ -122,5 +123,73 @@ export const sendToken = async (req, res) => {
     } catch (error) {
         res.status(500).json({ message: 'Error sending the email', error: error })
     }
+}
 
+export const validateToken = async (req, res) => {
+    const token = req.params.token
+    try {
+        const user = await usersModel.findOne({
+            resetPasswordToken: token,
+            resetPasswordExpires: { $gt: Date.now() }
+        })
+
+        if (!user) {
+            res.render('message', {
+                title: "Error",
+                messageTitle: "El token no es válido o ha expirado"
+            })
+        } else {
+
+            res.render('reset-password', { token: req.params.token })
+
+        }
+
+    } catch (error) {
+        res.status(500).json({ message: 'Error processing the request', error: error })
+    }
+}
+
+export const resetPassword = async (req, res) => {
+    try {
+        const user = await usersModel.findOne({
+            resetPasswordToken: req.params.token,
+            resetPasswordExpires: { $gt: Date.now() }
+        })
+
+        if (!user) {
+            res.render('message', {
+                title: "Error",
+                messageTitle: "El token no es válido o ha expirado"
+            })
+        }
+
+        if (req.body.password !== req.body.confirmPassword) {
+            return res.status(400).render('reset-password', { 
+                token: req.params.token, 
+                errorMessage: 'Los campos no coinciden.' 
+            })
+        }
+
+        if (isValidPassword(user, req.body.password)) {
+            return res.status(400).render('reset-password', { 
+                token: req.params.token, 
+                errorMessage: 'La nueva contraseña debe ser diferente a la anterior'
+            })
+
+        }
+
+
+        user.password = createHash(req.body.password)
+        user.resetPasswordToken = undefined
+        user.resetPasswordExpires = undefined
+
+        await user.save()
+
+        res.render('message', {
+            title: "Exito",
+            message: "Contraseña modificada"
+        })
+    } catch (err) {
+        res.status(500).json({ message: 'Error resetting the password', error: err })
+    }
 }
